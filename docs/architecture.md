@@ -17,20 +17,29 @@ Mattermost 입력을 Agent 작업 큐로 변환하고, 상태를 데이터베이
 
 - 요청을 `incoming_messages`로 저장
 - 후속 실행 단위를 `agent_tasks(status=queued)`로 생성
-- 현재는 큐잉까지 구현, 실제 실행 워커는 차후 분리 예정
+- 워커가 `queued` 작업을 소비해 `completed/failed` 상태로 갱신
 
 ### 3) Health / Readiness
 
 - `GET /healthz`: 프로세스 생존 확인
 - `GET /readyz`: DB 연결 준비 상태 확인
 
-### 4) Agent Execution Layer (Planned)
+### 4) Task Status API
+
+- `GET /tasks/{task_id}`: 작업 실행 상태/요약 조회
+
+### 5) Worker
+
+- 실행 명령: `python -m mm_agent_bridge.worker`
+- 현재는 mock executor로 동작하며, 추후 Codex/Claude 실행 어댑터로 대체 예정
+
+### 6) Agent Execution Layer (Planned)
 
 - Codex/Claude 등 엔진 추상화
 - 워커 프로세스가 `agent_tasks`를 polling/consuming
 - 실행 결과/요약/실패 원인을 DB에 업데이트
 
-### 5) Database (Stateful Layer)
+### 7) Database (Stateful Layer)
 
 - `incoming_messages`: 원 요청 메타데이터 + 텍스트
 - `agent_tasks`: 실행 상태 큐

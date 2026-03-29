@@ -2,7 +2,7 @@ PYTHON ?= python3
 VENV ?= .venv
 ACTIVATE = . $(VENV)/bin/activate
 
-.PHONY: setup up down migrate run test lint
+.PHONY: setup up down migrate run worker worker-once test lint
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -19,6 +19,12 @@ migrate:
 
 run:
 	$(ACTIVATE) && uvicorn mm_agent_bridge.main:app --app-dir app/src --reload
+
+worker:
+	$(ACTIVATE) && python -m mm_agent_bridge.worker --poll-interval 1.0
+
+worker-once:
+	$(ACTIVATE) && python -m mm_agent_bridge.worker --once
 
 test:
 	$(ACTIVATE) && pytest
