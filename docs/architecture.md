@@ -32,7 +32,8 @@ Mattermost 입력을 Agent 작업 큐로 변환하고, 상태를 데이터베이
 ### 5) Worker
 
 - 실행 명령: `python -m mm_agent_bridge.worker`
-- 현재는 mock executor로 동작하며, 추후 Codex/Claude 실행 어댑터로 대체 예정
+- 실행기 어댑터를 통해 `mock` 또는 `codex_cli` 백엔드 사용
+- `codex_cli` 사용 시 워커가 Codex CLI를 호출해 결과를 task summary로 저장
 
 ### 6) Agent Execution Layer (Planned)
 
