@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from mm_agent_bridge.config import get_settings
 from mm_agent_bridge.db import Base, get_db
 from mm_agent_bridge.main import app
+from mm_agent_bridge.services import task_worker
 from mm_agent_bridge.services.task_worker import process_next_task
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -70,3 +71,35 @@ def test_process_next_task_returns_none_when_empty_queue() -> None:
     _, testing_session_local = _make_test_client()
     with testing_session_local() as db:
         assert process_next_task(db) is None
+
+
+def test_process_next_task_posts_callback_when_response_url_present(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def fake_post_worker_result(response_url: str, summary: str) -> None:
+        captured["response_url"] = response_url
+        captured["summary"] = summary
+
+    monkeypatch.setattr(task_worker, "post_worker_result", fake_post_worker_result)
+    client, testing_session_local = _make_test_client()
+    queue_resp = client.post(
+        "/webhooks/mattermost",
+        json={
+            "request_id": "req-worker-callback",
+            "user_id": "u-1",
+            "channel_id": "c-1",
+            "response_url": "https://mattermost.example/hooks/abc",
+            "text": "send callback",
+        },
+    )
+    assert queue_resp.status_code == 202
+
+    with testing_session_local() as db:
+        processed = process_next_task(db)
+
+    assert processed is not None
+    assert processed.status == "completed"
+    assert captured["response_url"] == "https://mattermost.example/hooks/abc"
+    assert captured["summary"] == "[mock-executor] send callback"

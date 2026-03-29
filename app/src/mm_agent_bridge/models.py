@@ -17,6 +17,7 @@ class IncomingMessage(Base):
     )
     user_id: Mapped[str] = mapped_column(String(128), index=True)
     channel_id: Mapped[str] = mapped_column(String(128), index=True)
+    response_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     text: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

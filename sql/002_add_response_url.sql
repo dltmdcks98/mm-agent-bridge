@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE incoming_messages
+  ADD COLUMN IF NOT EXISTS response_url VARCHAR(2048);
+
+COMMIT;

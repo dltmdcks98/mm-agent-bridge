@@ -16,6 +16,7 @@ down:
 
 migrate:
 	psql postgresql://mm_bridge:mm_bridge@localhost:5432/mm_bridge -f sql/001_init.sql
+	psql postgresql://mm_bridge:mm_bridge@localhost:5432/mm_bridge -f sql/002_add_response_url.sql
 
 run:
 	$(ACTIVATE) && uvicorn mm_agent_bridge.main:app --app-dir app/src --reload

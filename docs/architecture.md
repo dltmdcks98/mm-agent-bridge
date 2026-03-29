@@ -18,6 +18,7 @@ Mattermost 입력을 Agent 작업 큐로 변환하고, 상태를 데이터베이
 - 요청을 `incoming_messages`로 저장
 - 후속 실행 단위를 `agent_tasks(status=queued)`로 생성
 - 워커가 `queued` 작업을 소비해 `completed/failed` 상태로 갱신
+- `response_url`이 있는 메시지는 워커 완료 시 Mattermost로 콜백 전송
 
 ### 3) Health / Readiness
 
@@ -41,9 +42,9 @@ Mattermost 입력을 Agent 작업 큐로 변환하고, 상태를 데이터베이
 
 ### 7) Database (Stateful Layer)
 
-- `incoming_messages`: 원 요청 메타데이터 + 텍스트
+- `incoming_messages`: 원 요청 메타데이터 + 텍스트 + `response_url`
 - `agent_tasks`: 실행 상태 큐
-- 마이그레이션: `sql/001_init.sql`
+- 마이그레이션: `sql/001_init.sql`, `sql/002_add_response_url.sql`
 
 ## Data Policy
 

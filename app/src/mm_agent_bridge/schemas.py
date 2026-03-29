@@ -7,6 +7,7 @@ class MattermostWebhookRequest(BaseModel):
     channel_id: str = Field(min_length=1, max_length=128)
     text: str = Field(min_length=1)
     token: str | None = Field(default=None, max_length=256)
+    response_url: str | None = Field(default=None, max_length=2048)
 
     @field_validator("text")
     @classmethod
