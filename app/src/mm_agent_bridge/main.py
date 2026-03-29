@@ -3,7 +3,12 @@ from sqlalchemy.orm import Session
 
 from mm_agent_bridge.config import get_settings
 from mm_agent_bridge.db import check_db_connection, get_db
-from mm_agent_bridge.schemas import BridgeAcceptedResponse, MattermostWebhookRequest
+from mm_agent_bridge.models import AgentTask
+from mm_agent_bridge.schemas import (
+    BridgeAcceptedResponse,
+    MattermostWebhookRequest,
+    TaskStatusResponse,
+)
 from mm_agent_bridge.security import validate_mattermost_token
 from mm_agent_bridge.services.bridge_service import (
     DuplicateRequestError,
@@ -58,4 +63,17 @@ def receive_mattermost_webhook(
         request_id=payload.request_id,
         task_id=task.id,
         status=task.status,
+    )
+
+
+@app.get("/tasks/{task_id}", response_model=TaskStatusResponse)
+def get_task_status(task_id: int, db: Session = Depends(get_db)) -> TaskStatusResponse:
+    task = db.get(AgentTask, task_id)
+    if task is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="task not found")
+    return TaskStatusResponse(
+        task_id=task.id,
+        status=task.status,
+        engine=task.engine,
+        summary=task.summary,
     )

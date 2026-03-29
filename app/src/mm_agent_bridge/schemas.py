@@ -20,3 +20,10 @@ class BridgeAcceptedResponse(BaseModel):
     request_id: str
     task_id: int
     status: str
+
+
+class TaskStatusResponse(BaseModel):
+    task_id: int
+    status: str
+    engine: str
+    summary: str | None
