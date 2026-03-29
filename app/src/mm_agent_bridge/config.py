@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "mm-agent-bridge"
     database_url: str = "sqlite+pysqlite:///./mm_agent_bridge.db"
+    mattermost_webhook_token: str | None = None
+    mattermost_token_header: str = "X-Mattermost-Token"
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="MM_BRIDGE_")
 
