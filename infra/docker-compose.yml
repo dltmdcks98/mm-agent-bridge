@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    container_name: mm-agent-bridge-db
+    environment:
+      POSTGRES_USER: mm_bridge
+      POSTGRES_PASSWORD: mm_bridge
+      POSTGRES_DB: mm_bridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mm_bridge -d mm_bridge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

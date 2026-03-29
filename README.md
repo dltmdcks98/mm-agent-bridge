@@ -2,89 +2,78 @@
 
 Mattermost 요청을 받아 Agent 작업으로 연결하는 브리지 서비스입니다.
 
----
+## 개요
 
-## 개요 (Overview)
-
-이 프로젝트는 아래 계층을 연결하는 브리지 역할을 합니다.
+이 프로젝트는 아래 계층을 연결합니다.
 - Mattermost (입력)
-- Agent 실행 계층 (Codex / Claude Code / 향후 도구)
-- 데이터베이스 (상태 저장 계층)
+- Bridge Server (요청 수신/검증/큐잉)
+- Agent 실행 계층 (Codex/Claude 등)
+- 데이터베이스 (상태 저장)
 
----
+## 핵심 원칙
 
-## 핵심 원칙 (Key Principles)
+- 저장소는 Stateless 유지
+- 런타임 데이터는 DB에만 저장
+- 개인 데이터/원본 대화 로그/시크릿은 저장소에 저장 금지
 
-- 저장소(Repository)는 Stateless로 유지한다
-- 모든 런타임 데이터는 데이터베이스에 저장한다
-- 개인 정보/대화 데이터는 파일에 저장하지 않는다
-- 저장소에는 코드/설정/문서만 포함한다
+## 현재 구현 범위
 
----
+- `POST /webhooks/mattermost`: 요청 수신 후 DB에 저장
+- `incoming_messages`, `agent_tasks` 테이블 기반 큐잉
+- 동일 `request_id` 중복 요청 방지(409)
+- 중복 처리 시 DB 유니크 제약 기반으로 원자적 롤백 보장
+- `GET /healthz` 헬스체크
+- `GET /readyz` DB 연결 준비 상태 체크
 
-## 아키텍처 (단순화)
+## 로컬 실행
 
-Mattermost → Bridge Server → Agent Execution → Database
+1. 의존성 설치
 
----
+```bash
+make setup
+```
 
-## 로컬 설정 (Local Setup)
-
-1. 환경 변수 파일 복사
+2. 환경 변수 설정
 
 ```bash
 cp .env.example .env
 ```
 
-2. 의존 서비스 시작
+3. PostgreSQL 시작
 
 ```bash
-docker-compose up -d
+make up
 ```
 
-3. 마이그레이션 실행
+4. 마이그레이션 적용
 
 ```bash
-# TODO: 마이그레이션 명령 추가
+make migrate
 ```
 
-4. 애플리케이션 실행
+5. 애플리케이션 실행
 
 ```bash
-# TODO: 실행 명령 추가
+make run
 ```
 
----
+## 테스트 / 린트
 
-## 프로젝트 구조 (Project Structure)
+```bash
+make test
+make lint
+```
 
-- `app/` → 애플리케이션 코드
-- `docs/` → 문서
-- `sql/` → 스키마 및 마이그레이션
-- `infra/` → Docker/인프라 설정
+## CI
 
----
+- GitHub Actions: `.github/workflows/ci.yml`
+- 실행 항목: `ruff check .`, `pytest`
 
-## 범위 (Scope)
+## 프로젝트 구조
 
-### 포함 (Included)
-
-- Agent 브리지 로직
-- Mattermost 연동
-- 데이터베이스 스키마
-- 실행 오케스트레이션
-
-### 제외 (Not Included)
-
-- 저장소 내 개인 사용자 데이터
-- 파일 기반 대화 로그
-- 시크릿 또는 API 키
-
----
-
-## 향후 작업 (Future Work)
-
-- Agent 실행기 통합 (Codex / Claude Code)
-- Stateful 메모리 계층 (PostgreSQL + Vector)
-- 작업 오케스트레이션
-- 관측성(로깅/트레이싱)
+- `app/src` → 애플리케이션 코드
+- `app/tests` → 테스트 코드
+- `docs` → 아키텍처 문서
+- `sql` → 스키마 및 마이그레이션
+- `infra` → docker/deployment 설정
+- `.codex/agents` → 프로젝트 로컬 서브에이전트 설정

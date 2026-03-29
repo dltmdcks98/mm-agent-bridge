@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+.venv/
+
+# Local env files
+.env
+
+# Local subagent configs
+.codex/agents/
+
+# Local sqlite file (dev default)
+mm_agent_bridge.db
+
+# OS files
+.DS_Store
