@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     executor_backend: str = "mock"
     codex_cli_command: str = "codex"
     codex_cli_args: str = ""
+    claude_cli_command: str = "claude"
+    claude_cli_args: str = ""
     executor_timeout_seconds: int = 90
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="MM_BRIDGE_")
