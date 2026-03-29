@@ -1,10 +1,21 @@
+import pytest
 from fastapi.testclient import TestClient
+from mm_agent_bridge.config import get_settings
 from mm_agent_bridge.db import Base, get_db
 from mm_agent_bridge.main import app
 from mm_agent_bridge.models import AgentTask, IncomingMessage
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+
+@pytest.fixture(autouse=True)
+def clear_runtime_settings(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", raising=False)
+    monkeypatch.delenv("MM_BRIDGE_MATTERMOST_TOKEN_HEADER", raising=False)
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 def _make_test_client() -> tuple[TestClient, sessionmaker]:
@@ -100,3 +111,37 @@ def test_blank_text_returns_422() -> None:
         },
     )
     assert response.status_code == 422
+
+
+def test_webhook_requires_token_when_configured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", "secret-token")
+    get_settings.cache_clear()
+    client, _ = _make_test_client()
+    response = client.post(
+        "/webhooks/mattermost",
+        json={
+            "request_id": "req-auth-1",
+            "user_id": "u-1",
+            "channel_id": "c-1",
+            "text": "hello",
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_webhook_accepts_valid_header_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", "secret-token")
+    monkeypatch.setenv("MM_BRIDGE_MATTERMOST_TOKEN_HEADER", "X-Test-Token")
+    get_settings.cache_clear()
+    client, _ = _make_test_client()
+    response = client.post(
+        "/webhooks/mattermost",
+        headers={"X-Test-Token": "secret-token"},
+        json={
+            "request_id": "req-auth-2",
+            "user_id": "u-1",
+            "channel_id": "c-1",
+            "text": "hello",
+        },
+    )
+    assert response.status_code == 202
