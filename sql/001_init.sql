@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS incoming_messages (
   source VARCHAR(32) NOT NULL DEFAULT 'mattermost',
   user_id VARCHAR(128) NOT NULL,
   channel_id VARCHAR(128) NOT NULL,
+  response_url VARCHAR(2048),
   text TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

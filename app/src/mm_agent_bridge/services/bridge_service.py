@@ -15,6 +15,7 @@ def enqueue_mattermost_request(db: Session, payload: MattermostWebhookRequest) -
             request_id=payload.request_id,
             user_id=payload.user_id,
             channel_id=payload.channel_id,
+            response_url=payload.response_url,
             text=payload.text,
         )
         db.add(message)
