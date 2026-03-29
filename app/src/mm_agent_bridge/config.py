@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+pysqlite:///./mm_agent_bridge.db"
     mattermost_webhook_token: str | None = None
     mattermost_token_header: str = "X-Mattermost-Token"
+    executor_backend: str = "mock"
+    codex_cli_command: str = "codex"
+    codex_cli_args: str = ""
+    executor_timeout_seconds: int = 90
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="MM_BRIDGE_")
 

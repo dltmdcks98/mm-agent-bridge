@@ -4,6 +4,7 @@ from mm_agent_bridge.config import get_settings
 from mm_agent_bridge.db import Base, get_db
 from mm_agent_bridge.main import app
 from mm_agent_bridge.services import task_worker
+from mm_agent_bridge.services.executor import ExecutorError
 from mm_agent_bridge.services.task_worker import process_next_task
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -103,3 +104,30 @@ def test_process_next_task_posts_callback_when_response_url_present(
     assert processed.status == "completed"
     assert captured["response_url"] == "https://mattermost.example/hooks/abc"
     assert captured["summary"] == "[mock-executor] send callback"
+
+
+def test_process_next_task_marks_failed_when_executor_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_execute_task(*, text: str, settings) -> str:
+        raise ExecutorError("codex cli failed: bad auth")
+
+    monkeypatch.setattr(task_worker, "execute_task", fake_execute_task)
+    client, testing_session_local = _make_test_client()
+    queue_resp = client.post(
+        "/webhooks/mattermost",
+        json={
+            "request_id": "req-worker-fail",
+            "user_id": "u-1",
+            "channel_id": "c-1",
+            "text": "will fail",
+        },
+    )
+    assert queue_resp.status_code == 202
+
+    with testing_session_local() as db:
+        processed = process_next_task(db)
+
+    assert processed is not None
+    assert processed.status == "failed"
+    assert processed.summary == "codex cli failed: bad auth"
