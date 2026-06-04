@@ -14,6 +14,10 @@ __pycache__/
 
 # Local sqlite file (dev default)
 mm_agent_bridge.db
+*.db
+
+# Local runtime logs
+tmp_*.log
 
 # OS files
 .DS_Store

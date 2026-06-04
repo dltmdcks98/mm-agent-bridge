@@ -41,7 +41,15 @@ Mattermost 입력을 Agent 작업 큐로 변환하고, 상태를 데이터베이
 - 워커 프로세스가 `agent_tasks`를 polling/consuming
 - 실행 결과/요약/실패 원인을 DB에 업데이트
 
-### 7) Database (Stateful Layer)
+### 7) Runtime Abstraction Boundary (Incremental)
+
+- `task_worker`는 직접 실행기 함수를 호출하지 않고 `AgentRuntime` 인터페이스를 통해 실행
+- `AgentRequest` / `AgentResult`를 공통 계약으로 사용
+- 기본 구현은 `ExecutorAgentRuntime`이며 기존 `mock`/`codex_cli`/`claude_cli` 동작을 그대로 재사용
+- `ConversationSessionResolver`, `ResponsePublisher` 프로토콜을 먼저 도입해 향후 Happy adapter 연결 지점을 고정
+- 주의: `root_id` 및 thread reply policy 결정은 Mattermost publishing 레이어 전용 책임으로 유지
+
+### 8) Database (Stateful Layer)
 
 - `incoming_messages`: 원 요청 메타데이터 + 텍스트 + `response_url`
 - `agent_tasks`: 실행 상태 큐

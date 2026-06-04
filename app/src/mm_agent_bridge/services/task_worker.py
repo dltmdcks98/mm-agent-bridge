@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 
 from mm_agent_bridge.config import get_settings
 from mm_agent_bridge.models import AgentTask, IncomingMessage
-from mm_agent_bridge.services.executor import ExecutorError, execute_task
+from mm_agent_bridge.services.agent_runtime import AgentRequest, build_agent_runtime
+from mm_agent_bridge.services.executor import ExecutorError
 from mm_agent_bridge.services.mattermost_client import post_worker_result
 
 
@@ -27,10 +28,18 @@ def process_next_task(db: Session) -> AgentTask | None:
             task.summary = "source message not found"
         else:
             settings = get_settings()
+            runtime = build_agent_runtime(settings=settings)
+            request = AgentRequest(
+                message_id=message.id,
+                request_id=message.request_id,
+                user_id=message.user_id,
+                channel_id=message.channel_id,
+                text=message.text,
+            )
             try:
-                summary = execute_task(text=message.text, settings=settings)
+                result = runtime.run(request)
                 task.status = "completed"
-                task.summary = summary
+                task.summary = result.summary
                 if message.response_url:
                     post_worker_result(message.response_url, task.summary)
             except ExecutorError as exc:

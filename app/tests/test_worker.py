@@ -4,6 +4,7 @@ from mm_agent_bridge.config import get_settings
 from mm_agent_bridge.db import Base, get_db
 from mm_agent_bridge.main import app
 from mm_agent_bridge.services import task_worker
+from mm_agent_bridge.services.agent_runtime import AgentResult
 from mm_agent_bridge.services.executor import ExecutorError
 from mm_agent_bridge.services.task_worker import process_next_task
 from sqlalchemy import create_engine
@@ -13,7 +14,9 @@ from sqlalchemy.pool import StaticPool
 
 @pytest.fixture(autouse=True)
 def clear_runtime_settings(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", raising=False)
+    # Project .env may contain a real webhook token. Worker tests exercise queue
+    # processing behavior, not auth, so explicitly disable token validation.
+    monkeypatch.setenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", "")
     monkeypatch.delenv("MM_BRIDGE_MATTERMOST_TOKEN_HEADER", raising=False)
     get_settings.cache_clear()
     yield
@@ -109,10 +112,15 @@ def test_process_next_task_posts_callback_when_response_url_present(
 def test_process_next_task_marks_failed_when_executor_errors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fake_execute_task(*, text: str, settings) -> str:
-        raise ExecutorError("codex cli failed: bad auth")
+    class FailingRuntime:
+        def run(self, request) -> AgentResult:
+            raise ExecutorError("codex cli failed: bad auth")
 
-    monkeypatch.setattr(task_worker, "execute_task", fake_execute_task)
+    monkeypatch.setattr(
+        task_worker,
+        "build_agent_runtime",
+        lambda *, settings: FailingRuntime(),
+    )
     client, testing_session_local = _make_test_client()
     queue_resp = client.post(
         "/webhooks/mattermost",
