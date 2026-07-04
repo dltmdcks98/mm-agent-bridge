@@ -11,8 +11,11 @@ from sqlalchemy.pool import StaticPool
 
 @pytest.fixture(autouse=True)
 def clear_runtime_settings(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", raising=False)
-    monkeypatch.delenv("MM_BRIDGE_MATTERMOST_TOKEN_HEADER", raising=False)
+    # Settings also load the project .env file. Use explicit empty env values so
+    # local developer secrets do not leak into tests and make webhook requests
+    # unexpectedly require authentication.
+    monkeypatch.setenv("MM_BRIDGE_MATTERMOST_WEBHOOK_TOKEN", "")
+    monkeypatch.setenv("MM_BRIDGE_MATTERMOST_TOKEN_HEADER", "X-Mattermost-Token")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
