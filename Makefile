@@ -1,12 +1,13 @@
-PYTHON ?= python3
+PYTHON ?= python
+UV ?= uv
 VENV ?= .venv
 ACTIVATE = . $(VENV)/bin/activate
 
 .PHONY: setup up down migrate run worker worker-once test lint
 
 setup:
-	$(PYTHON) -m venv $(VENV)
-	$(ACTIVATE) && pip install -e .[dev]
+	$(UV) venv --python $(PYTHON) --clear $(VENV)
+	$(UV) pip install --python $(VENV)/bin/python -e .[dev]
 
 up:
 	docker compose -f infra/docker-compose.yml up -d

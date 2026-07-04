@@ -32,11 +32,23 @@ Mattermost 요청을 받아 Agent 작업으로 연결하는 브리지 서비스�
 
 ## 로컬 실행
 
+0. 프로젝트 런타임 활성화
+
+```bash
+mise install
+mise exec -- python --version
+mise exec -- uv --version
+```
+
+이 저장소는 `.mise.toml`로 Python `3.11.15`와 `uv`를 고정합니다.
+
 1. 의존성 설치
 
 ```bash
 make setup
 ```
+
+`make setup`은 `uv venv`와 `uv pip install -e .[dev]`를 사용합니다.
 
 2. 환경 변수 설정
 
