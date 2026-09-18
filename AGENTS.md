@@ -78,3 +78,15 @@ A task is complete when:
 - Code builds / runs successfully
 - Tests pass
 - Documentation is updated if behavior changed
+
+---
+
+## Codex Project Policy
+
+This section is a Codex copy adapted from `.agent/HERMES_POLICIES.md`. Keep the Hermes policy source read-only. The existing repository rules above take precedence.
+
+- This FastAPI/SQLAlchemy bridge sends Mattermost requests to agent workflows and stores runtime state in the database.
+- Prefer the project `.venv` or `uv`; run `pytest`, `ruff`, or focused checks when feasible.
+- Record every database schema change as a migration under `sql/`; never introduce file-based memory or runtime state.
+- For Mattermost webhook and slash-command changes, verify idempotency, retries, timeout handling, duplicate delivery, and secret masking.
+- Never commit `.env`, `tmp_*.db`, runtime logs, caches, personal data, conversation logs, API keys, or secrets.
